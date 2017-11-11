@@ -9,25 +9,25 @@ import service.fdu_ac_service.model.Rule;
 
 @Service("DBService")
 public class DBService {
-	@Autowired
-	private ACDaoImp userDao;
+    @Autowired
+    private ACDaoImp userDao;
 
-	@Transactional
-    public Rule[] getRuleList(Long[] tableIds, int type ){
+    @Transactional
+    public Rule[] getRuleList(Long[] tableIds, int type) {
         Rule[] ruleList = userDao.getRuleList(tableIds, type);
         return ruleList;
     }
 
     @Transactional
-    public int addRule(Long[] tableIds, long userId, int type, int status){
+    public int addRule(Long[] tableIds, long userId, int type, int status) {
         long ret = userDao.addRule(tableIds, userId, type, status);
-        if(ret > 0)
+        if (ret > 0)
             return 1;
         return 0;
     }
 
     @Transactional
-    public long deleteRule(Long[] tableIds, long user_id, int type){
+    public long deleteRule(Long[] tableIds, long user_id, int type) {
         return userDao.deleteRule(tableIds, user_id, type);
     }
 
@@ -37,7 +37,7 @@ public class DBService {
 //    }
 
     @Transactional
-    public long checkForAuthority(long userId, long tableId){
+    public long checkForAuthority(long userId, long tableId) {
         return userDao.checkForAuthority(userId, tableId);
     }
 }

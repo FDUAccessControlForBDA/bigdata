@@ -88,6 +88,42 @@ public class ResultDataACController {
         return rm;
     }
 
+    @RequestMapping("/applyForData")
+    @ResponseBody
+    public Map<String, Object> applyForData(HttpServletRequest request, HttpServletResponse response) {
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        Map<String, Object> rm = new HashMap<String, Object>();
+        long resultTableId=Long.parseLong(request.getParameter("tableId"));
+        long sponsorId=Long.parseLong(request.getParameter("userId"));
+
+        List<Long> resultTableUserIdList=resultDataACService.getResultTableOwnerIdList(resultTableId);
+        int size=resultTableUserIdList.size();
+        if(size>1){
+            //所有者中排除发起人,其余为表决人
+            resultTableUserIdList.remove(resultTableId);
+            //list转array
+            Long[] LvoterIdList = resultTableUserIdList.toArray(new Long[resultTableUserIdList.size()]);
+            //新建投票活动
+            int ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_VISIT,
+                    ACConstants.STATUS_UNDERWAY, ACConstants.VALUE_DEFAULT, LvoterIdList, ACConstants.DECISON_DEFAULT);
+            if(ret>0){
+                rm.put("result", "success");
+                rm.put("message", " new apply for  view data success");
+            }else{
+                rm.put("result", "error");
+                rm.put("message", "error");
+            }
+        }else if(size==1){
+            //无需申请,直接查看数据
+            //TODO hive层授权
+        }else{
+            //出错
+            rm.put("result", "error");
+            rm.put("message", "error");
+        }
+        return rm;
+    }
+
     @RequestMapping("/generateWhiteList")
     @ResponseBody
     public Map<String, Object> generateWhiteList(HttpServletRequest request, HttpServletResponse response) {

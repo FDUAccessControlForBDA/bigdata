@@ -9,14 +9,12 @@ import java.util.List;
 public interface ResultDataACDao {
 
 
-
-
 //        //初始化结果数据默认黑名单
 //        public long generateBlackList(Long[] tableIds,long result_table_id);
 //        //检查某个用户是否有查看结果数据的权限
 //        public long checkAuthorityForView(Long[] tableIds,long user_id);
 
-    //        //数据所有者申请添加白名单
+//        //数据所有者申请添加白名单
 //        public long applyForWhite(long result_table_id,long user_id,int type,int status);
 //        //数据所有者申请删除黑名单
 //        public long applyForBlack(long result_table_id,long user_id,int type);
@@ -41,16 +39,26 @@ public interface ResultDataACDao {
     //获取原数据黑名单的并集
     public Long[] getUnionBlack(Long[] tableIds, int type);
 
-
     //查看结果数据的所有者id列表
     public List<Long> getResultTableOwnerIdList(long result_table_id);
-
-    //用户申请查看数据
-    public long applyForData(long result_table_id, long user_id, int type, int status);
 
     //直接放弃结果数据所有权
     public long directGiveUpOwnerShip(long result_table_id, long user_id);
 
     //转移所有权给试验场管理员
     public long transferOwnershipToAdmin(long result_table_id, long user_id);
+
+    //新建投票活动
+    public long newVoteAction(long result_table_id,long sponsor_id,int type,int status,long user_id,Long[] voterIds,int user_decision);
+
+//    //新建其余所有者的表决活动
+//    public long newVoteStatus(Long[] voterIds,long action_id,int user_decision);
+
+    //查看投票活动表决允许人数
+    public int checkVoteSuccessForActionCount(long action_id);
+
+    //用户申请查看数据
+    public long applyForData(long result_table_id, long user_id, int type, int status);
+
+
 }

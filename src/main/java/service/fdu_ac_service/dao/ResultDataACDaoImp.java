@@ -6,10 +6,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.type.LongType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import service.fdu_ac_service.model.Rule;
 import service.fdu_ac_service.model.UserAuthorityPO;
-import service.fdu_ac_service.model.VoteActionPO;
-import service.fdu_ac_service.model.UserTableRelationPO;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -123,7 +120,21 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         }
         return rst;
 
+    }
 
+    //新建投票活动
+    public long newVoteAction(long result_table_id,long sponsor_id,int type,int status,long user_id,Long[] voterIds,int user_decision){
+        //TODO 记得返回自增id
+        String sql=
+        long rst=0;
+        return rst;
+    }
+
+
+    //查看投票活动表决允许人数
+    public int checkVoteSuccessForActionCount(long action_id){
+        int count=0;
+        return count;
     }
 
     @Override
