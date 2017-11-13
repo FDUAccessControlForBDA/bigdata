@@ -13,18 +13,18 @@ public class ResultDataACService {
     private ResultDataACDaoImp resultDataACDao;
 
 
-    @Transactional
-    public int applyForData(long result_table_id, long user_id, int type, int status) {
-        long ret = resultDataACDao.applyForData(result_table_id, user_id, type, status);
-        if (ret > 0) {
-            return 1;
-        }
-        return 0;
-    }
+//    @Transactional
+//    public int applyForData(long table_id, long user_id, int type, int status) {
+//        long ret = resultDataACDao.applyForData(table_id, user_id, type, status);
+//        if (ret > 0) {
+//            return 1;
+//        }
+//        return 0;
+//    }
 
     @Transactional
-    public List<Long> getResultTableOwnerIdList(long result_table_id) {
-        List<Long> ret = resultDataACDao.getResultTableOwnerIdList(result_table_id);
+    public List<Long> getResultTableOwnerIdList(long table_id) {
+        List<Long> ret = resultDataACDao.getResultTableOwnerIdList(table_id);
         if (ret.size() > 0) {
             return ret;
         }
@@ -32,8 +32,8 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int directGiveUpOwnership(long result_table_id, long user_id) {
-        long ret = resultDataACDao.directGiveUpOwnerShip(result_table_id, user_id);
+    public int directGiveUpOwnership(long table_id, long user_id) {
+        long ret = resultDataACDao.directGiveUpOwnerShip(table_id, user_id);
         if (ret > 0) {
             return 1;
         }
@@ -41,8 +41,8 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int transferOwnershipToAdmin(long result_table_id, long user_id) {
-        long ret = resultDataACDao.transferOwnershipToAdmin(result_table_id, user_id);
+    public int transferOwnershipToAdmin(long table_id, long user_id) {
+        long ret = resultDataACDao.transferOwnershipToAdmin(table_id, user_id);
         if (ret > 0) {
             return 1;
         }
@@ -50,8 +50,8 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int generateRuleList(Long[] userIds, long result_table_id, int type, int status) {
-        long ret = resultDataACDao.generateRuleList(userIds, result_table_id, type, status);
+    public int generateRuleList(Long[] userIds, long table_id, int type, int status) {
+        long ret = resultDataACDao.generateRuleList(userIds, table_id, type, status);
         if (ret > 0) {
             return 1;
         }
@@ -70,25 +70,25 @@ public class ResultDataACService {
         return ret;
     }
 
-    //新建投票活动
-    public int newVoteAction(long result_table_id,long sponsor_id,int type,int status,long user_id,Long[] voterIds,int user_decision){
-        long ret=resultDataACDao.newVoteAction(result_table_id,sponsor_id,type,status,user_id,voterIds,user_decision);
+    @Transactional
+    public int newVoteAction(long table_id,long sponsor_id,int type,int status,long user_id,Long[] voterIds,int user_decision){
+        long ret=resultDataACDao.newVoteAction(table_id,sponsor_id,type,status,user_id,voterIds,user_decision);
         if(ret>0){
             return 1;
         }
         return 0;
     }
 
-//    //新建其余所有者的表决活动
-//    public int newVoteStatus(Long[] voterIds,long action_id,int user_decision){
-//        long ret = resultDataACDao.newVoteStatus(voterIds,action_id,user_decision);
-//        if(ret>0){
-//            return 1;
-//        }
-//        return 0;
-//    }
+    @Transactional
+    public int decisionForApply(long voter_id,long action_id,int user_decision){
+        long ret=resultDataACDao.decisionForApply(voter_id,action_id,user_decision);
+        if(ret>0){
+            return 1;
+        }
+        return 0;
+    }
 
-    //查看投票活动表决允许人数
+    @Transactional
     public int checkVoteSuccessForActionCount(long action_id){
         int count = resultDataACDao.checkVoteSuccessForActionCount(action_id);
         if(count>0){

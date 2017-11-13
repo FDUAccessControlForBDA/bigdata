@@ -37,11 +37,12 @@ public class VoteActionPO {
     public VoteActionPO() {
     }
 
-    public VoteActionPO(long table_id, long sponsor_id, int type, int status, Timestamp sponsor_time) {
+    public VoteActionPO(long table_id, long sponsor_id, int type, long user_id, int status, Timestamp sponsor_time) {
         super();
         this.table_id = table_id;
         this.sponsor_id = sponsor_id;
         this.type = type;
+        this.user_id = user_id;
         this.status = status;
         this.sponsor_time = sponsor_time;
     }
