@@ -1,11 +1,10 @@
 package service.fdu_ac_service.utils;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-public class LongUtils {
+public class UtilsHelper {
     //交集(注意结果集中若使用LinkedList添加，则需要判断是否包含该元素，否则其中会包含重复的元素)
     public static Long[] intersect(Long[] arr1, Long[] arr2) {
         List<Long> l = new LinkedList<Long>();
@@ -54,5 +53,12 @@ public class LongUtils {
         return list.toArray(result);
     }
 
+    //获取系统当前时间
+    public static Timestamp getCurrentTime(){
+        Date currentDate = new Date();//获得系统时间.
+        String currentTimeString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(currentDate);//将时间格式转换成符合Timestamp要求的格式.
+        Timestamp currentTime = Timestamp.valueOf(currentTimeString);//把时间转换
+        return currentTime;
+    }
 
 }
