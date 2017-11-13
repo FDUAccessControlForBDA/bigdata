@@ -7,12 +7,40 @@ import org.hibernate.type.LongType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import service.fdu_ac_service.model.UserAuthorityPO;
+import service.fdu_ac_service.model.VoteActionPO;
+import service.fdu_ac_service.model.VoteStatusPO;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Repository("ResultDataDao")
 public class ResultDataACDaoImp implements ResultDataACDao {
+    @Override
+    //转移所有权给试验场管理员
+    public long transferOwnershipToAdmin(long result_table_id, long user_id) {
+        long rst = 0;
+
+        String sql = "select distinct id from bd_user where roles like 'admin%'";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createSQLQuery(sql);
+        List<BigInteger> adminIds = query.list();
+
+        if (adminIds.size() > 0) {
+            if (adminIds.size() == 1) {
+                long admin_id = adminIds.get(0).longValue();
+                String hql = "update UserTableRelationPO utr set utr.user_id=? where utr.table_id=? and utr.user_id=?";
+                query = sessionFactory.getCurrentSession().createQuery(hql)
+                        .setParameter(0, admin_id).setParameter(1, result_table_id).setParameter(2, user_id);
+                rst = query.executeUpdate();
+            }
+        }
+        return rst;
+
+    }
+
     @Autowired
     private SessionFactory sessionFactory;
 
@@ -23,8 +51,8 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         long rst = 0;
         return rst;
     }
-
     //初始化结果数据默认名单
+
     public long generateRuleList(Long[] userIds, long result_table_id, int type, int status) {
         long rst = 0;
 
@@ -41,8 +69,8 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         }
         return rst;
     }
-
     //获取原数据白名单的交集
+
     public Long[] getIntersectWhite(Long[] tableIds, int type) {
         // 通过关系代数除法获取这些表共有的用户id
         String sql = "select distinct user_id from bd_user_authority_list R1 " + "where not exists "
@@ -60,8 +88,8 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         }
         return null;
     }
-
     //获取原数据黑名单的并集
+
     public Long[] getUnionBlack(Long[] tableIds, int type) {
         String sql="select distinct user_id FROM bd_user_authority_list where table_id in (:tableIds) and type="+type;
         Query query = sessionFactory.getCurrentSession().createSQLQuery(sql).addScalar("user_id", LongType.INSTANCE).setParameterList("tableIds", tableIds);
@@ -99,35 +127,31 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         return rst;
     }
 
-    @Override
-    //转移所有权给试验场管理员
-    public long transferOwnershipToAdmin(long result_table_id, long user_id) {
-        long rst = 0;
-
-        String sql = "select distinct id from bd_user where roles like 'admin%'";
-        Session session = sessionFactory.getCurrentSession();
-        Query query = session.createSQLQuery(sql);
-        List<BigInteger> adminIds = query.list();
-
-        if (adminIds.size() > 0) {
-            if (adminIds.size() == 1) {
-                long admin_id = adminIds.get(0).longValue();
-                String hql = "update UserTableRelationPO utr set utr.user_id=? where utr.table_id=? and utr.user_id=?";
-                query = sessionFactory.getCurrentSession().createQuery(hql)
-                        .setParameter(0, admin_id).setParameter(1, result_table_id).setParameter(2, user_id);
-                rst = query.executeUpdate();
-            }
-        }
-        return rst;
-
-    }
-
     //新建投票活动
     public long newVoteAction(long result_table_id,long sponsor_id,int type,int status,long user_id,Long[] voterIds,int user_decision){
-        //TODO 记得返回自增id
-        String sql=
-        long rst=0;
-        return rst;
+        long rst=1;
+        // add VoteActionPO to db
+        Session session = sessionFactory.getCurrentSession();
+        String hql="from VoteActionPo va where va.result_table_id=? and va.sponsor_id=? and va.type=? and va.user=?";
+        Query query=session.createQuery(hql).setParameter(0,result_table_id)
+                .setParameter(1,sponsor_id).setParameter(2,type).setParameter(3,user_id);
+        if(query.list().size()<=0) {
+            VoteActionPO voteActionPO = new VoteActionPO(result_table_id, sponsor_id, type, status, user_id);
+            session.save(voteActionPO);
+            long actionId = voteActionPO.getId();
+
+            Date date = new Date();//获得系统时间.
+            String nowTimeString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);//将时间格式转换成符合Timestamp要求的格式.
+            Timestamp nowTime = Timestamp.valueOf(nowTimeString);//把时间转换
+
+            for (int i = 0; i < voterIds.length; i++) {
+                VoteStatusPO voteStatusPO = new VoteStatusPO(voterIds[i], actionId, nowTime, user_decision);
+                rst = rst & (long) session.save(voteActionPO);
+            }
+            return rst;
+        }
+
+        return 0;
     }
 
 
