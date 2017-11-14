@@ -21,14 +21,19 @@ public class DBService {
     @Transactional
     public int addRule(Long[] tableIds, long userId, int type, int status) {
         long ret = userDao.addRule(tableIds, userId, type, status);
-        if (ret > 0)
+        if (ret > 0){
             return 1;
+        }
         return 0;
     }
 
     @Transactional
-    public long deleteRule(Long[] tableIds, long user_id, int type) {
-        return userDao.deleteRule(tableIds, user_id, type);
+    public int deleteRule(Long[] tableIds, long user_id, int type) {
+        long ret=userDao.deleteRule(tableIds, user_id, type);
+        if(ret>0){
+            return 1;
+        }
+        return 0;
     }
 
 //    @Transactional

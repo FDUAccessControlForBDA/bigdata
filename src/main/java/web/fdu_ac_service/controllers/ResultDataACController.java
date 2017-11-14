@@ -41,7 +41,7 @@ public class ResultDataACController {
             LtableIds[i] = new Long(StableIds[i]);
         }
 
-        Long ret = userService.deleteRule(LtableIds, userId, ACConstants.WHITE);
+        int ret = userService.deleteRule(LtableIds, userId, ACConstants.WHITE);
         if (ret > 0) {
             rm.put("result", "success");
             rm.put("message", "success");
@@ -62,28 +62,21 @@ public class ResultDataACController {
 
         List<Long> resultTableUserIdList = resultDataACService.getResultTableOwnerIdList(tableId);
         int size = resultTableUserIdList.size();
+        int ret=0;
         if (size > 1) {
             //直接放弃
-            int ret = resultDataACService.directGiveUpOwnership(tableId, userId);
-            if (ret > 0) {
-                rm.put("result", "success");
-                rm.put("message", "give up success");
-            } else {
-                rm.put("result", "error");
-                rm.put("message", "error");
-            }
+            ret = resultDataACService.directGiveUpOwnership(tableId, userId);
+
         } else if (size == 1) {
             //转移给试验场管理人员
-            int ret = resultDataACService.transferOwnershipToAdmin(tableId, userId);
-            if (ret > 0) {
-                rm.put("result", "success");
-                rm.put("message", "transfer to admin success");
-            } else {
-                rm.put("result", "error");
-                rm.put("message", "error");
-            }
+            ret = resultDataACService.transferOwnershipToAdmin(tableId, userId);
+        }else{
+            ret=0;
+        }
+        if (ret > 0) {
+            rm.put("result", "success");
+            rm.put("message", "success");
         } else {
-            //出错
             rm.put("result", "error");
             rm.put("message", "error");
         }
@@ -101,6 +94,8 @@ public class ResultDataACController {
 
         List<Long> resultTableUserIdList=resultDataACService.getResultTableOwnerIdList(resultTableId);
         int size=resultTableUserIdList.size();
+
+        int ret=0;
         if(size>1){
             //所有者中排除发起人,其余为表决人
             Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -110,24 +105,24 @@ public class ResultDataACController {
                     sListIterator.remove();
                 }
             }
-            //resultTableUserIdList.remove(resultTableId);
             //list转array
             Long[] LvoterIdList = resultTableUserIdList.toArray(new Long[resultTableUserIdList.size()]);
             //新建投票活动
-            int ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_VISIT,
+            ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_VISIT,
                     ACConstants.STATUS_UNDERWAY, ACConstants.VALUE_DEFAULT, LvoterIdList, ACConstants.DECISON_DEFAULT);
-            if(ret>0){
-                rm.put("result", "success");
-                rm.put("message", " new apply for view data success");
-            }else{
-                rm.put("result", "error");
-                rm.put("message", "error");
-            }
+
         }else if(size==1){
             //无需申请,直接查看数据
             //TODO hive层授权
         }else{
             //出错
+            ret=0;
+        }
+
+        if(ret>0){
+            rm.put("result", "success");
+            rm.put("message", "success");
+        }else{
             rm.put("result", "error");
             rm.put("message", "error");
         }
@@ -145,6 +140,8 @@ public class ResultDataACController {
 
         List<Long> resultTableUserIdList=resultDataACService.getResultTableOwnerIdList(resultTableId);
         int size=resultTableUserIdList.size();
+
+        int ret=0;
         if(size>1){
             //所有者中排除发起人,其余为表决人
             Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -154,24 +151,25 @@ public class ResultDataACController {
                     sListIterator.remove();
                 }
             }
-            //resultTableUserIdList.remove(resultTableId);
             //list转array
             Long[] LvoterIdList = resultTableUserIdList.toArray(new Long[resultTableUserIdList.size()]);
             //新建投票活动
-            int ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_ADDWHITE,
+            ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_ADDWHITE,
                     ACConstants.STATUS_UNDERWAY,userId, LvoterIdList, ACConstants.DECISON_DEFAULT);
-            if(ret>0){
-                rm.put("result", "success");
-                rm.put("message", " new apply for add white user success");
-            }else{
-                rm.put("result", "error");
-                rm.put("message", "error");
-            }
+
         }else if(size==1){
-            //无需申请,直接查看数据
-            //TODO hive层授权
+            //无需申请,直接增加白名单
+            Long[] tableIds=new Long[1];
+            tableIds[0]=resultTableId;
+            ret=userService.addRule(tableIds,userId,ACConstants.BLACK,ACConstants.NON_EXPORTABLE);
         }else{
-            //出错
+            ret=0;
+        }
+
+        if(ret>0){
+            rm.put("result", "success");
+            rm.put("message", "success");
+        }else{
             rm.put("result", "error");
             rm.put("message", "error");
         }
@@ -189,6 +187,7 @@ public class ResultDataACController {
 
         List<Long> resultTableUserIdList=resultDataACService.getResultTableOwnerIdList(resultTableId);
         int size=resultTableUserIdList.size();
+        int ret=0;
         if(size>1){
             //所有者中排除发起人,其余为表决人
             Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -198,22 +197,24 @@ public class ResultDataACController {
                     sListIterator.remove();
                 }
             }
-            //resultTableUserIdList.remove(resultTableId);
             //list转array
             Long[] LvoterIdList = resultTableUserIdList.toArray(new Long[resultTableUserIdList.size()]);
             //新建投票活动
-            int ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_DELETEBLACK,
+            ret = resultDataACService.newVoteAction(resultTableId, sponsorId, ACConstants.TYPE_DELETEBLACK,
                     ACConstants.STATUS_UNDERWAY, userId, LvoterIdList, ACConstants.DECISON_DEFAULT);
-            if(ret>0){
-                rm.put("result", "success");
-                rm.put("message", " new apply for delete black user success");
-            }else{
-                rm.put("result", "error");
-                rm.put("message", "error");
-            }
         }else if(size==1){
-            //无需申请,直接查看数据
-            //TODO hive层授权
+            //无需申请,直接删除黑名单
+            Long[] tableIds=new Long[1];
+            tableIds[0]=resultTableId;
+            ret=userService.deleteRule(tableIds,userId,ACConstants.BLACK);
+
+        }else{
+            ret=0;
+        }
+
+        if(ret>0){
+            rm.put("result", "success");
+            rm.put("message", "success");
         }else{
             //出错
             rm.put("result", "error");
@@ -235,56 +236,13 @@ public class ResultDataACController {
 
         if(decision==ACConstants.DECISION_DENY){
             //当前所有者表决为:拒绝申请
-            ret = resultDataACService.decisionForApply(voterId,actionId,ACConstants.DECISION_DENY);
-            if(ret>0){
-                /* 有一个所有者投了否决票,投票失败;
-                 * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
-                 * 2)删除所有投票状态
-                 */
-                int ret_close=resultDataACService.closeVoteAction(actionId,ACConstants.STATUS_FINISH_FAIL);
-
-            }
-
+            ret = resultDataACService.decisionDenyForApply(voterId,actionId);
         }else if(decision==ACConstants.DECISION_PERMIT){
             //当前所有者表决为:同意申请
-            ret = resultDataACService.decisionForApply(voterId,actionId,ACConstants.DECISION_PERMIT);
-            if(ret>0){
-                /* 1)检查投票活动的所有表决是不是只有"弃权"和"同意申请"两种状态;
-                 * 2)是,删除所有表决状态,关闭投票活动,改为成功;
-                 * 3)执行申请业务;
-                 */
-                int ret_check=resultDataACService.checkVoteSuccessForActionCount(actionId);
-                if(ret_check>0){
-                    int ret_close=resultDataACService.closeVoteAction(actionId,ACConstants.STATUS_FINISH_SUCCESS);
-                    if(ret_close>0){
-                        List<VoteActionPO> voteActionPOList=resultDataACService.getUserIdFromVoteAction(actionId);
-                        if(voteActionPOList.size()>0){
-                            for(VoteActionPO voteActionPO:voteActionPOList){
-                                switch (voteActionPO.getType()){
-                                    case ACConstants.TYPE_DELETEBLACK:
-                                        //删除黑名单
-                                        int ret_delete=resultDataACService.deleteBlack();
-                                        break;
-                                    case ACConstants.TYPE_ADDWHITE:
-
-                                        break;
-                                    case ACConstants.TYPE_VISIT:
-
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-
-            }
-
+            ret = resultDataACService.decisionPermitForApply(voterId,actionId);
         }else if(decision==ACConstants.DECISION_GIVEUP){
             //当前所有者表决为:弃权
-            ret = resultDataACService.decisionForApply(voterId,actionId,ACConstants.DECISION_GIVEUP);
+            ret = resultDataACService.decisionGiveupForApply(voterId,actionId);
         }else{
             ret=0;
         }

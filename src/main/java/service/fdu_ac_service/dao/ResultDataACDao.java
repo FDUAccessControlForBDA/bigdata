@@ -57,14 +57,22 @@ public interface ResultDataACDao {
     //为投票活动表决
     public long decisionForApply(long voter_id,long action_id,int user_decision);
 
+    //关闭投票活动，删除所有表决
+    public long closeVoteAction(long action_id,int status);
+
+    //用过action_id获取VoteActionPO对象
+    public VoteActionPO getVoteActionPOById(long action_id);
+
+    //查看投票活动表决允许人数
+    public long checkVoteSuccessForAction(long action_id);
+
     //查看所有他人发起的申请活动
     public List<VoteStatusPO> getApplyList(long voter_id);
 
     //查看自己发起的申请活动
     public List<VoteActionPO> getMyApplyList(long sponsor_id);
 
-    //查看投票活动表决允许人数
-    public int checkVoteSuccessForActionCount(long action_id);
+
 
 
 

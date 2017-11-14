@@ -6,12 +6,14 @@ import org.hibernate.SessionFactory;
 import org.hibernate.type.LongType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import service.fdu_ac_service.model.ACConstants;
 import service.fdu_ac_service.model.UserAuthorityPO;
 import service.fdu_ac_service.model.VoteActionPO;
 import service.fdu_ac_service.model.VoteStatusPO;
 import service.fdu_ac_service.utils.UtilsHelper;
 
 import java.math.BigInteger;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -54,10 +56,11 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         String sql = "select distinct user_id from bd_user_authority_list R1 " + "where not exists "
                 + "( select table_id from (select table_id from bd_user_authority_list where table_id in (:tableIds)) S "
                 + "where not exists "
-                + "(select * from bd_user_authority_list R2 where R2.user_id=R1.user_id and R2.table_id=S.table_id and R1.type = R2.type)) and R1.type = "
-                + type;
+                + "(select * from bd_user_authority_list R2 where R2.user_id=R1.user_id and R2.table_id=S.table_id and" +
+                " R1.type = R2.type)) and R1.type = " + type;
 
-        Query query = sessionFactory.getCurrentSession().createSQLQuery(sql).addScalar("user_id", LongType.INSTANCE).setParameterList("tableIds", tableIds);
+        Query query = sessionFactory.getCurrentSession().createSQLQuery(sql)
+                .addScalar("user_id", LongType.INSTANCE).setParameterList("tableIds", tableIds);
         List<Long> userIds = query.list();
 
         if (userIds.size() > 0) {
@@ -70,7 +73,8 @@ public class ResultDataACDaoImp implements ResultDataACDao {
     //获取原数据黑名单的并集
     public Long[] getUnionBlack(Long[] tableIds, int type) {
         String sql = "select distinct user_id FROM bd_user_authority_list where table_id in (:tableIds) and type=" + type;
-        Query query = sessionFactory.getCurrentSession().createSQLQuery(sql).addScalar("user_id", LongType.INSTANCE).setParameterList("tableIds", tableIds);
+        Query query = sessionFactory.getCurrentSession().createSQLQuery(sql)
+                .addScalar("user_id", LongType.INSTANCE).setParameterList("tableIds", tableIds);
         List<Long> userIds = query.list();
 
         if (userIds.size() > 0) {
@@ -146,7 +150,7 @@ public class ResultDataACDaoImp implements ResultDataACDao {
             if (actionId != 0) {
                 for (long voteId : voterIds) {
                     VoteStatusPO voteStatusPO = new VoteStatusPO(voteId, actionId, currentTime, user_decision);
-                    long id=(Long)session.save(voteStatusPO);
+                    long id = (Long) session.save(voteStatusPO);
                     int tmp = id > 0 ? 1 : 0;
                     result = result & tmp;
                 }
@@ -158,13 +162,13 @@ public class ResultDataACDaoImp implements ResultDataACDao {
 
     @Override
     //为投票活动表决
-    public long decisionForApply(long voter_id,long action_id,int user_decision){
-        long rst=0;
-        String hql="from VoteStatusPO vs where vs.voter_id=? and vs.action_id=?";
-        Session session=sessionFactory.getCurrentSession();
-        Query query=session.createQuery(hql).setParameter(0,voter_id).setParameter(1,action_id);
+    public long decisionForApply(long voter_id, long action_id, int user_decision) {
+        long rst = 0;
+        String hql = "from VoteStatusPO vs where vs.voter_id=? and vs.action_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, voter_id).setParameter(1, action_id);
 
-        if(query.list().size()>0) {
+        if (query.list().size() > 0) {
             Timestamp current_time = UtilsHelper.getCurrentTime();
             hql = "update VoteStatusPO vs set vs.user_decision=? , vs.vote_time=? where vs.voter_id=? and vs.action_id=?";
             query = session.createQuery(hql)
@@ -176,27 +180,61 @@ public class ResultDataACDaoImp implements ResultDataACDao {
     }
 
     @Override
+    //关闭投票活动，删除所有表决
+    public long closeVoteAction(long action_id, int status) {
+        long rst = 0;
+        String hql = "delete VoteStatusPO where action_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, action_id);
+        int count = query.executeUpdate();//返回值是执行操作的条数
+        if (count > 0) {
+            hql="update VoteActionPO va set va.status=? , va.sponsor_time=? where va.id=?";
+            Timestamp currentTime=UtilsHelper.getCurrentTime();
+            query=session.createQuery(hql).setParameter(0,status).setParameter(1,currentTime).setParameter(2,action_id);
+            rst=query.executeUpdate();
+        }
+        return rst;
+    }
+
+    //用过action_id获取VoteActionPO对象
+    public VoteActionPO getVoteActionPOById(long action_id) {
+        String hql="from VoteActionPO va where va.id=?";
+        Session session=sessionFactory.getCurrentSession();
+        Query query=session.createQuery(hql).setParameter(0,action_id);
+        VoteActionPO voteActionPO=(VoteActionPO) query.uniqueResult();
+        if(voteActionPO!=null){
+            return voteActionPO;
+        }
+        return null;
+    }
+
+    @Override
+    //查看投票活动表决允许人数
+    public long checkVoteSuccessForAction(long action_id) {
+        //TODO
+        long rst=0;
+        String hql="from VoteStatusPO vs where vs.user_decision not in (?,?) and vs.action_id=?";
+        Session session=sessionFactory.getCurrentSession();
+        Query query=session.createQuery(hql).setParameter(0,ACConstants.DECISION_PERMIT)
+                .setParameter(1,ACConstants.DECISION_GIVEUP).setParameter(2,action_id);
+        if(query.list().size()<=0){
+            rst=1;
+        }
+        return rst;
+    }
+
+    @Override
     //查看所有他人发起的申请活动
-    public List<VoteStatusPO> getApplyList(long voter_id){
+    public List<VoteStatusPO> getApplyList(long voter_id) {
         //TODO
         return null;
     }
 
     @Override
     //查看自己发起的申请活动
-    public List<VoteActionPO> getMyApplyList(long sponsor_id){
+    public List<VoteActionPO> getMyApplyList(long sponsor_id) {
         //TODO
         return null;
     }
-
-    @Override
-    //查看投票活动表决允许人数
-    public int checkVoteSuccessForActionCount(long action_id) {
-        //TODO
-        int count = 0;
-        return count;
-    }
-
-
 
 }

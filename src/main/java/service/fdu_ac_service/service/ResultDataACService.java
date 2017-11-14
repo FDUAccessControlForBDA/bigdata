@@ -3,7 +3,10 @@ package service.fdu_ac_service.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import service.fdu_ac_service.dao.ACDaoImp;
 import service.fdu_ac_service.dao.ResultDataACDaoImp;
+import service.fdu_ac_service.model.ACConstants;
+import service.fdu_ac_service.model.VoteActionPO;
 
 import java.util.List;
 
@@ -12,15 +15,8 @@ public class ResultDataACService {
     @Autowired
     private ResultDataACDaoImp resultDataACDao;
 
-
-//    @Transactional
-//    public int applyForData(long table_id, long user_id, int type, int status) {
-//        long ret = resultDataACDao.applyForData(table_id, user_id, type, status);
-//        if (ret > 0) {
-//            return 1;
-//        }
-//        return 0;
-//    }
+    @Autowired
+    private ACDaoImp userDao;
 
     @Transactional
     public List<Long> getResultTableOwnerIdList(long table_id) {
@@ -80,22 +76,75 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int decisionForApply(long voter_id,long action_id,int user_decision){
-        long ret=resultDataACDao.decisionForApply(voter_id,action_id,user_decision);
+    public int decisionDenyForApply(long voter_id,long action_id){
+        long ret=resultDataACDao.decisionForApply(voter_id,action_id,ACConstants.DECISION_DENY);
+        if(ret>0){
+            /* 有一个所有者投了否决票,投票失败;
+             * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
+             * 2)删除所有投票状态
+             */
+            ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
+            if(ret>0){
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    @Transactional
+    public int decisionPermitForApply(long voter_id, long action_id) {
+        long ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_PERMIT);
+        if (ret > 0) {
+            /* 1)检查投票活动的所有表决是不是只有"弃权"和"同意申请"两种状态;
+             * 2)是,删除所有表决状态,关闭投票活动,改为成功;
+             * 3)执行申请业务;
+             */
+            ret=resultDataACDao.checkVoteSuccessForAction(action_id);
+            if(ret>0){
+                ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_SUCCESS);
+                if(ret>0){
+                    VoteActionPO voteActionPO=resultDataACDao.getVoteActionPOById(action_id);
+                    if(voteActionPO!=null){
+                        //将long变量转为长度为1的Long[],为了代码重用.
+                        Long[] tableIds=new Long[1];
+                        tableIds[0]=voteActionPO.getTable_id();
+
+                        switch (voteActionPO.getType()){
+                            case ACConstants.TYPE_DELETEBLACK:
+                                //删除黑名单
+                                ret=userDao.deleteRule(tableIds,voteActionPO.getUser_id(),ACConstants.BLACK);
+                                break;
+                            case ACConstants.TYPE_ADDWHITE:
+                                //增加白名单
+                                ret=userDao.addRule(tableIds,voteActionPO.getUser_id(),ACConstants.WHITE,ACConstants.NON_EXPORTABLE);
+                                break;
+                            case ACConstants.TYPE_VISIT:
+                                //hive层授予数据的权限
+
+                                break;
+                            default:
+                                break;
+                        }
+                        if(ret>0){
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+        return 0;
+
+    }
+
+    @Transactional
+    public int decisionGiveupForApply(long voter_id,long action_id){
+        long ret=resultDataACDao.decisionForApply(voter_id,action_id, ACConstants.DECISION_GIVEUP);
         if(ret>0){
             return 1;
         }
         return 0;
     }
 
-    @Transactional
-    public int checkVoteSuccessForActionCount(long action_id){
-        int count = resultDataACDao.checkVoteSuccessForActionCount(action_id);
-        if(count>0){
-            return count;
-        }
-        return 0;
-    }
 
 
 }

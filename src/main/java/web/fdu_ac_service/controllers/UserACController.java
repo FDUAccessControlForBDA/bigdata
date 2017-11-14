@@ -168,7 +168,7 @@ public class UserACController {
 			LtableIds[i] = new Long(StableIds[i]);
 		}
 
-		Long ret = userService.deleteRule(LtableIds, userId, type);
+		int ret = userService.deleteRule(LtableIds, userId, type);
 		if(ret > 0){
 			rm.put("result", "success");
 			rm.put("message", "success");
