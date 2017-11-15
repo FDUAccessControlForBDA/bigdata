@@ -188,21 +188,21 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         Query query = session.createQuery(hql).setParameter(0, action_id);
         int count = query.executeUpdate();//返回值是执行操作的条数
         if (count > 0) {
-            hql="update VoteActionPO va set va.status=? , va.sponsor_time=? where va.id=?";
-            Timestamp currentTime=UtilsHelper.getCurrentTime();
-            query=session.createQuery(hql).setParameter(0,status).setParameter(1,currentTime).setParameter(2,action_id);
-            rst=query.executeUpdate();
+            hql = "update VoteActionPO va set va.status=? , va.sponsor_time=? where va.id=?";
+            Timestamp currentTime = UtilsHelper.getCurrentTime();
+            query = session.createQuery(hql).setParameter(0, status).setParameter(1, currentTime).setParameter(2, action_id);
+            rst = query.executeUpdate();
         }
         return rst;
     }
 
     //用过action_id获取VoteActionPO对象
     public VoteActionPO getVoteActionPOById(long action_id) {
-        String hql="from VoteActionPO va where va.id=?";
-        Session session=sessionFactory.getCurrentSession();
-        Query query=session.createQuery(hql).setParameter(0,action_id);
-        VoteActionPO voteActionPO=(VoteActionPO) query.uniqueResult();
-        if(voteActionPO!=null){
+        String hql = "from VoteActionPO va where va.id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, action_id);
+        VoteActionPO voteActionPO = (VoteActionPO) query.uniqueResult();
+        if (voteActionPO != null) {
             return voteActionPO;
         }
         return null;
@@ -211,14 +211,15 @@ public class ResultDataACDaoImp implements ResultDataACDao {
     @Override
     //查看投票活动表决允许人数
     public long checkVoteSuccessForAction(long action_id) {
-        //TODO
-        long rst=0;
-        String hql="from VoteStatusPO vs where vs.user_decision not in (?,?) and vs.action_id=?";
-        Session session=sessionFactory.getCurrentSession();
-        Query query=session.createQuery(hql).setParameter(0,ACConstants.DECISION_PERMIT)
-                .setParameter(1,ACConstants.DECISION_GIVEUP).setParameter(2,action_id);
-        if(query.list().size()<=0){
-            rst=1;
+        long rst = 0;
+        String hql = "from VoteStatusPO vs where vs.user_decision not in (?,?) and vs.action_id=?";
+        String hql2 = "from VoteStatusPO vs where vs.user_decision=? and vs.action_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, ACConstants.DECISION_PERMIT)
+                .setParameter(1, ACConstants.DECISION_GIVEUP).setParameter(2, action_id);
+        Query query2=session.createQuery(hql).setParameter(0, ACConstants.DECISION_PERMIT).setParameter(1, action_id);
+        if (query.list().size() <= 0) {
+            rst = 1;
         }
         return rst;
     }
@@ -226,14 +227,26 @@ public class ResultDataACDaoImp implements ResultDataACDao {
     @Override
     //查看所有他人发起的申请活动
     public List<VoteStatusPO> getApplyList(long voter_id) {
-        //TODO
+        String hql = "from VoteStatusPO vs where vs.voter_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, voter_id);
+        List<VoteStatusPO> voteStatusPOList = query.list();
+        if (voteStatusPOList.size() > 0) {
+            return voteStatusPOList;
+        }
         return null;
     }
 
     @Override
     //查看自己发起的申请活动
     public List<VoteActionPO> getMyApplyList(long sponsor_id) {
-        //TODO
+        String hql = "from VoteActionPO va where va.sponsor_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, sponsor_id);
+        List<VoteActionPO> voteActionPOList = query.list();
+        if (voteActionPOList.size() > 0) {
+            return voteActionPOList;
+        }
         return null;
     }
 

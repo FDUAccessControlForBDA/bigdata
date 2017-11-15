@@ -7,6 +7,7 @@ import service.fdu_ac_service.dao.ACDaoImp;
 import service.fdu_ac_service.dao.ResultDataACDaoImp;
 import service.fdu_ac_service.model.ACConstants;
 import service.fdu_ac_service.model.VoteActionPO;
+import service.fdu_ac_service.model.VoteStatusPO;
 
 import java.util.List;
 
@@ -44,6 +45,7 @@ public class ResultDataACService {
         }
         return 0;
     }
+
 
     @Transactional
     public int generateRuleList(Long[] userIds, long table_id, int type, int status) {
@@ -137,7 +139,7 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int decisionGiveupForApply(long voter_id,long action_id){
+    public int decisionGiveUpForApply(long voter_id,long action_id){
         long ret=resultDataACDao.decisionForApply(voter_id,action_id, ACConstants.DECISION_GIVEUP);
         if(ret>0){
             return 1;
@@ -145,6 +147,22 @@ public class ResultDataACService {
         return 0;
     }
 
+    @Transactional
+    public List<VoteStatusPO> getApplyList(long voter_id){
+        List<VoteStatusPO> voteStatusPOList = resultDataACDao.getApplyList(voter_id);
+        if(voteStatusPOList.size()>0){
+            return voteStatusPOList;
+        }
+        return null;
+    }
 
+    @Transactional
+    public List<VoteActionPO> getMyApplyList(long sponsor_id){
+        List<VoteActionPO> voteActionPOList = resultDataACDao.getMyApplyList(sponsor_id);
+        if(voteActionPOList.size()>0){
+            return voteActionPOList;
+        }
+        return null;
+    }
 
 }

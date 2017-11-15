@@ -1,5 +1,6 @@
 package web.fdu_ac_service.controllers;
 
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,11 +63,10 @@ public class ResultDataACController {
 
         List<Long> resultTableUserIdList = resultDataACService.getResultTableOwnerIdList(tableId);
         int size = resultTableUserIdList.size();
-        int ret=0;
+        int ret;
         if (size > 1) {
             //直接放弃
             ret = resultDataACService.directGiveUpOwnership(tableId, userId);
-
         } else if (size == 1) {
             //转移给试验场管理人员
             ret = resultDataACService.transferOwnershipToAdmin(tableId, userId);
@@ -80,7 +80,6 @@ public class ResultDataACController {
             rm.put("result", "error");
             rm.put("message", "error");
         }
-
         return rm;
     }
 
@@ -141,7 +140,7 @@ public class ResultDataACController {
         List<Long> resultTableUserIdList=resultDataACService.getResultTableOwnerIdList(resultTableId);
         int size=resultTableUserIdList.size();
 
-        int ret=0;
+        int ret;
         if(size>1){
             //所有者中排除发起人,其余为表决人
             Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -228,7 +227,7 @@ public class ResultDataACController {
     public Map<String, Object> decisionForApply(HttpServletRequest request, HttpServletResponse response) {
         response.addHeader("Access-Control-Allow-Origin", "*");
         Map<String, Object> rm = new HashMap<String, Object>();
-        long voterId = Long.parseLong(request.getParameter("userId"));
+        long voterId = Long.parseLong(request.getParameter("voterId"));
         long actionId = Long.parseLong(request.getParameter("actionId"));
         int decision = Integer.parseInt(request.getParameter("decision"));
 
@@ -242,7 +241,7 @@ public class ResultDataACController {
             ret = resultDataACService.decisionPermitForApply(voterId,actionId);
         }else if(decision==ACConstants.DECISION_GIVEUP){
             //当前所有者表决为:弃权
-            ret = resultDataACService.decisionGiveupForApply(voterId,actionId);
+            ret = resultDataACService.decisionGiveUpForApply(voterId,actionId);
         }else{
             ret=0;
         }
@@ -336,6 +335,69 @@ public class ResultDataACController {
                 rm.put("result", "success");
                 rm.put("message", "don't have to generate white rule list.");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            rm.put("result", "error");
+            rm.put("message", "error");
+        }
+        return rm;
+    }
+
+    @RequestMapping("/getApplyList")
+    @ResponseBody
+    public Map<String, Object> getApplyList(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> rm = new HashMap<>();
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        long voterId = Long.parseLong(request.getParameter("voterId"));
+
+        try {
+            List<VoteStatusPO> voteStatusPOList = resultDataACService.getApplyList(voterId);
+            JSONArray voteStatusList = new JSONArray();
+            for (VoteStatusPO vs : voteStatusPOList) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", vs.getId());
+                map.put("voterId", vs.getVoter_id());
+                map.put("actionId", vs.getAction_id());
+                map.put("voteTime", vs.getVote_time());
+                map.put("userDecision", vs.getUser_decision());
+                voteStatusList.put(map);
+            }
+            rm.put("result", "success");
+            rm.put("message", "success");
+            rm.put("code", "200");
+            rm.put("voteStatusList", voteStatusList.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            rm.put("result", "error");
+            rm.put("message", "error");
+        }
+        return rm;
+    }
+
+    @RequestMapping("/getMyApplyList")
+    @ResponseBody
+    public Map<String, Object> getMyApplyList(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> rm = new HashMap<>();
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        long sponsorId = Long.parseLong(request.getParameter("sponsorId"));
+
+        try {
+            List<VoteActionPO> voteActionPOList = resultDataACService.getMyApplyList(sponsorId);
+            JSONArray voteActionList = new JSONArray();
+            for (VoteActionPO va : voteActionPOList) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", va.getId());
+                map.put("tableId", va.getTable_id());
+                map.put("sponsorId", va.getSponsor_id());
+                map.put("type", va.getType());
+                map.put("status", va.getStatus());
+                map.put("sponsorTime", va.getSponsor_time());
+                voteActionList.put(map);
+            }
+            rm.put("result", "success");
+            rm.put("message", "success");
+            rm.put("code", "200");
+            rm.put("voteActionList", voteActionList.toString());
         } catch (Exception e) {
             e.printStackTrace();
             rm.put("result", "error");
