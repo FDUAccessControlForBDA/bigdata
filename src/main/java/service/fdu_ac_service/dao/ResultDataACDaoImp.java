@@ -217,7 +217,19 @@ public class ResultDataACDaoImp implements ResultDataACDao {
         Session session = sessionFactory.getCurrentSession();
         Query query = session.createQuery(hql).setParameter(0, ACConstants.DECISION_PERMIT)
                 .setParameter(1, ACConstants.DECISION_GIVEUP).setParameter(2, action_id);
-        Query query2=session.createQuery(hql).setParameter(0, ACConstants.DECISION_PERMIT).setParameter(1, action_id);
+        Query query2 = session.createQuery(hql2).setParameter(0, ACConstants.DECISION_PERMIT).setParameter(1, action_id);
+        if (query.list().size() <= 0 && query2.list().size() > 0) {
+            rst = 1;
+        }
+        return rst;
+    }
+
+    //查看投票活动表决弃权人数
+    public long checkVoteGiveUpForAction(long action_id){
+        long rst = 0;
+        String hql = "from VoteStatusPO vs where vs.user_decision!=? and vs.action_id=?";
+        Session session = sessionFactory.getCurrentSession();
+        Query query = session.createQuery(hql).setParameter(0, ACConstants.DECISION_GIVEUP).setParameter(1, action_id);
         if (query.list().size() <= 0) {
             rst = 1;
         }

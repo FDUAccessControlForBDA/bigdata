@@ -45,11 +45,15 @@ public interface ResultDataACDao {
     //查看投票活动表决允许人数
     public long checkVoteSuccessForAction(long action_id);
 
+    //查看投票活动表决弃权人数
+    public long checkVoteGiveUpForAction(long action_id);
+
     //查看所有他人发起的申请活动
     public List<VoteStatusPO> getApplyList(long voter_id);
 
     //查看自己发起的申请活动
     public List<VoteActionPO> getMyApplyList(long sponsor_id);
+
 
 //    //查看结果数据的白名单或黑名单
 //    public Rule[] getRuleList(long result_table_id,int type);

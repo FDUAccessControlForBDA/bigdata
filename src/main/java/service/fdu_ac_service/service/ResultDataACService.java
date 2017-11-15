@@ -142,7 +142,18 @@ public class ResultDataACService {
     public int decisionGiveUpForApply(long voter_id,long action_id){
         long ret=resultDataACDao.decisionForApply(voter_id,action_id, ACConstants.DECISION_GIVEUP);
         if(ret>0){
-            return 1;
+            /* 当全部所有者投了弃权票,投票失败;
+             * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
+             * 2)删除所有投票状态
+             */
+            ret=resultDataACDao.checkVoteGiveUpForAction(action_id);
+            if(ret>0){
+                ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
+                if(ret>0){
+                    return 1;
+                }
+            }
+
         }
         return 0;
     }
