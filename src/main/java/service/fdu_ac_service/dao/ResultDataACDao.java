@@ -10,7 +10,7 @@ import java.util.List;
 public interface ResultDataACDao {
 
     //生成结果数据所有者列表
-    public long generateOwnerList(Long[] tableIds, long result_table_id);
+    public long generateOwnerList(Long[] userIds, long result_table_id);
 
     //初始化结果数据默认名单
     public long generateRuleList(Long[] userIds, long result_table_id, int type, int status);

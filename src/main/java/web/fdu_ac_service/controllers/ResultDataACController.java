@@ -1,6 +1,7 @@
 package web.fdu_ac_service.controllers;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -334,6 +335,40 @@ public class ResultDataACController {
             } else {
                 rm.put("result", "success");
                 rm.put("message", "don't have to generate white rule list.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            rm.put("result", "error");
+            rm.put("message", "error");
+        }
+        return rm;
+    }
+
+    @RequestMapping("/generateOwnerList")
+    @ResponseBody
+    public Map<String, Object> generateOwnerList(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> rm = new HashMap<>();
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        String jsonString = "{\"resultTableId\":\"10\",\"resultUserId\":\"31\",\"originalTable\":[{\"tableId\":\"11\",\"userId\":\"32\"}," +
+                "{\"tableId\":\"12\",\"userId\":\"33\"},{\"tableId\":\"13\",\"userId\":\"34\"}]}";
+        try {
+            JSONObject tableUserList = new JSONObject(jsonString);
+            long resultTableId = Long.parseLong((String) tableUserList.get("resultTableId"));
+            long resultUserId = Long.parseLong((String) tableUserList.get("resultUserId"));
+            JSONArray originalTable = tableUserList.getJSONArray("originalTable");
+            Long[] userIds = new Long[originalTable.length() + 1];
+
+            userIds[0] = resultUserId;
+            for (int i = 1, j = 0; i < userIds.length; i++, j++) {
+                userIds[i] = Long.parseLong(originalTable.getJSONObject(j).getString("userId"));
+            }
+            int ret = resultDataACService.generateOwnerList(userIds,resultTableId);
+            if(ret>0){
+                rm.put("result", "success");
+                rm.put("message", "success");
+            }else{
+                rm.put("result", "error");
+                rm.put("message", "error");
             }
         } catch (Exception e) {
             e.printStackTrace();

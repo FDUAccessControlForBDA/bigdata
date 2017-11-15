@@ -6,10 +6,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.type.LongType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import service.fdu_ac_service.model.ACConstants;
-import service.fdu_ac_service.model.UserAuthorityPO;
-import service.fdu_ac_service.model.VoteActionPO;
-import service.fdu_ac_service.model.VoteStatusPO;
+import service.fdu_ac_service.model.*;
 import service.fdu_ac_service.utils.UtilsHelper;
 
 import java.math.BigInteger;
@@ -26,9 +23,19 @@ public class ResultDataACDaoImp implements ResultDataACDao {
 
     @Override
     //生成结果数据所有者列表
-    public long generateOwnerList(Long[] tableIds, long table_id) {
-        //TODO
+    public long generateOwnerList(Long[] userIds, long table_id) {
         long rst = 0;
+
+        //add UserTableRelationPO to db
+        Session session=sessionFactory.getCurrentSession();
+        String hql="from UserTableRelationPO utr where utr.table_id=? and utr.user_id=?";
+        for(long userId:userIds){
+            Query query=session.createQuery(hql).setParameter(0,table_id).setParameter(1,userId);
+            if(query.list().size()<=0){
+                UserTableRelationPO userTableRelationPO = new UserTableRelationPO(table_id,userId);
+                rst=(Long) session.save(userTableRelationPO);
+            }
+        }
         return rst;
     }
 
@@ -38,8 +45,8 @@ public class ResultDataACDaoImp implements ResultDataACDao {
 
         // add UserAuthorityPO to db
         Session session = sessionFactory.getCurrentSession();
+        String hql = "from UserAuthorityPO ua where ua.user_id=? and ua.table_id=? and ua.type=?";
         for (int i = 0; i < userIds.length; i++) {
-            String hql = "from UserAuthorityPO ua where ua.user_id=? and ua.table_id=? and ua.type=?";
             Query query = sessionFactory.getCurrentSession().createQuery(hql).setParameter(0, userIds[i])
                     .setParameter(1, table_id).setParameter(2, type);
             if (query.list().size() <= 0) {

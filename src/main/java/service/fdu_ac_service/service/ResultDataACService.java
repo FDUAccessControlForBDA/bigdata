@@ -46,6 +46,14 @@ public class ResultDataACService {
         return 0;
     }
 
+    @Transactional
+    public int generateOwnerList(Long[] userIds, long table_id) {
+        long ret = resultDataACDao.generateOwnerList(userIds, table_id);
+        if (ret > 0) {
+            return 1;
+        }
+        return 0;
+    }
 
     @Transactional
     public int generateRuleList(Long[] userIds, long table_id, int type, int status) {
@@ -122,7 +130,7 @@ public class ResultDataACService {
                                 break;
                             case ACConstants.TYPE_VISIT:
                                 //hive层授予数据的权限
-
+                                //TODO
                                 break;
                             default:
                                 break;
@@ -153,7 +161,6 @@ public class ResultDataACService {
                     return 1;
                 }
             }
-
         }
         return 0;
     }
@@ -175,5 +182,4 @@ public class ResultDataACService {
         }
         return null;
     }
-
 }
