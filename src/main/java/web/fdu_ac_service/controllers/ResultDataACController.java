@@ -263,7 +263,19 @@ public class ResultDataACController {
         int ret;//service层返回值
 
         try {
-            ret=resultDataACService.decisionForApply(voterId,actionId,decision);
+            if (decision == ACConstants.DECISION_DENY) {
+                //当前所有者表决为:拒绝申请
+                ret = resultDataACService.decisionDenyForApply(voterId, actionId);
+            } else if (decision == ACConstants.DECISION_PERMIT) {
+                //当前所有者表决为:同意申请
+                ret = resultDataACService.decisionPermitForApply(voterId, actionId);
+            } else if (decision == ACConstants.DECISION_GIVEUP) {
+                //当前所有者表决为:弃权
+                ret = resultDataACService.decisionGiveUpForApply(voterId, actionId);
+            } else {
+                ret = 0;
+            }
+
             if (ret > 0) {
                 rm.put("result", "success");
                 rm.put("message", "success");
