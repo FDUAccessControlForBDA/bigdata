@@ -12,6 +12,7 @@ import service.fdu_ac_service.model.VoteStatusPO;
 import java.util.List;
 
 @Service("ResultDataACService")
+
 public class ResultDataACService {
     @Autowired
     private ResultDataACDaoImp resultDataACDao;
@@ -159,8 +160,12 @@ public class ResultDataACService {
                 ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
                 if(ret>0){
                     return 1;
+                }else{
+                    return 0;
                 }
             }
+            //如果不是全部弃权,但是当前弃权操作成功完成,返回1
+            return 1;
         }
         return 0;
     }
