@@ -127,6 +127,7 @@ public class ResultDataACController {
             } else if (size == 1) {
                 //无需申请,直接查看数据
                 //TODO hive层授权
+                ret=1;
             } else {
                 //出错
                 ret = 0;
@@ -179,7 +180,7 @@ public class ResultDataACController {
                 //无需申请,直接增加白名单
                 Long[] tableIds = new Long[1];
                 tableIds[0] = resultTableId;
-                ret = userService.addRule(tableIds, userId, ACConstants.BLACK, ACConstants.NON_EXPORTABLE);
+                ret = userService.addRule(tableIds, userId, ACConstants.WHITE, ACConstants.NON_EXPORTABLE);
             } else {
                 ret = 0;
             }
