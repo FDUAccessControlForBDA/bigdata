@@ -69,7 +69,8 @@ public class ACDaoImp implements ACDao {
         String hql = "delete UserAuthorityPO ua where ua.user_id = ? and ua.type = ? and ua.table_id in (:tableIds)";
         Query query = sessionFactory.getCurrentSession().createQuery(hql).setParameter(0, user_id).setParameter(1, type)
                 .setParameterList("tableIds", tableIds);
-        return query.executeUpdate();
+        int ret= query.executeUpdate();
+        return ret;
     }
 
     @Override

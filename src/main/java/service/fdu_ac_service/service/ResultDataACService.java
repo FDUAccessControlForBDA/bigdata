@@ -87,92 +87,168 @@ public class ResultDataACService {
     }
 
     @Transactional
-    public int decisionDenyForApply(long voter_id,long action_id){
-        long ret=resultDataACDao.decisionForApply(voter_id,action_id,ACConstants.DECISION_DENY);
-        if(ret>0){
+    public int decisionForApply(long voter_id, long action_id, int user_decision) {
+        long ret;
+        if (user_decision == ACConstants.DECISION_DENY) {
+            //当前所有者表决为:拒绝申请
+            ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_DENY);
+            if (ret > 0) {
             /* 有一个所有者投了否决票,投票失败;
              * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
              * 2)删除所有投票状态
              */
-            ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
-            if(ret>0){
-                return 1;
+                ret = resultDataACDao.closeVoteAction(action_id, ACConstants.STATUS_FINISH_FAIL);
             }
+        } else if (user_decision == ACConstants.DECISION_PERMIT) {
+            //当前所有者表决为:同意申请
+            ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_PERMIT);
+        } else if (user_decision == ACConstants.DECISION_GIVEUP) {
+            //当前所有者表决为:弃权
+            ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_GIVEUP);
+        } else {
+            ret = 0;
         }
-        return 0;
-    }
 
-    @Transactional
-    public int decisionPermitForApply(long voter_id, long action_id) {
-        long ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_PERMIT);
-        if (ret > 0) {
+        if(ret>0){
             /* 1)检查投票活动的所有表决是不是只有"弃权"和"同意申请"两种状态;
              * 2)是,删除所有表决状态,关闭投票活动,改为成功;
              * 3)执行申请业务;
              */
-            ret=resultDataACDao.checkVoteSuccessForAction(action_id);
-            if(ret>0){
-                ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_SUCCESS);
-                if(ret>0){
-                    VoteActionPO voteActionPO=resultDataACDao.getVoteActionPOById(action_id);
-                    if(voteActionPO!=null){
-                        //将long变量转为长度为1的Long[],为了代码重用.
-                        Long[] tableIds=new Long[1];
-                        tableIds[0]=voteActionPO.getTable_id();
+            ret = resultDataACDao.checkVoteSuccessForAction(action_id);
+            if (ret > 0) {
+                VoteActionPO voteActionPO = resultDataACDao.getVoteActionPOById(action_id);
+                if (voteActionPO != null) {
+                    //将long变量转为长度为1的Long[],为了代码重用.
+                    Long[] tableIds = new Long[1];
+                    tableIds[0] = voteActionPO.getTable_id();
 
-                        switch (voteActionPO.getType()){
-                            case ACConstants.TYPE_DELETEBLACK:
-                                //删除黑名单
-                                ret=userDao.deleteRule(tableIds,voteActionPO.getUser_id(),ACConstants.BLACK);
-                                break;
-                            case ACConstants.TYPE_ADDWHITE:
-                                //增加白名单
-                                ret=userDao.addRule(tableIds,voteActionPO.getUser_id(),ACConstants.WHITE,ACConstants.NON_EXPORTABLE);
-                                break;
-                            case ACConstants.TYPE_VISIT:
-                                //hive层授予数据的权限
-                                //TODO
-                                break;
-                            default:
-                                break;
-                        }
-                        if(ret>0){
-                            return 1;
-                        }else{
-                            return 0;
-                        }
+                    switch (voteActionPO.getType()) {
+                        case ACConstants.TYPE_DELETEBLACK:
+                            //删除黑名单
+                            ret = userDao.deleteRule(tableIds, voteActionPO.getUser_id(), ACConstants.BLACK);
+                            break;
+                        case ACConstants.TYPE_ADDWHITE:
+                            //增加白名单
+                            ret = userDao.addRule(tableIds, voteActionPO.getUser_id(), ACConstants.WHITE, ACConstants.NON_EXPORTABLE);
+                            break;
+                        case ACConstants.TYPE_VISIT:
+                            //hive层授予数据的权限
+                            //TODO
+                            break;
+                        default:
+                            break;
+                    }
+                    if (ret > 0) {
+                        ret = resultDataACDao.closeVoteAction(action_id, ACConstants.STATUS_FINISH_SUCCESS);
                     }
                 }
-            }
-            //如果不是全部同意,但是当前同意操作成功完成,返回1
-            return 1;
-        }
-        return 0;
-
-    }
-
-    @Transactional
-    public int decisionGiveUpForApply(long voter_id,long action_id){
-        long ret=resultDataACDao.decisionForApply(voter_id,action_id, ACConstants.DECISION_GIVEUP);
-        if(ret>0){
-            /* 当全部所有者投了弃权票,投票失败;
+            }else{
+           /* 当全部所有者投了弃权票,投票失败;
              * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
              * 2)删除所有投票状态
              */
-            ret=resultDataACDao.checkVoteGiveUpForAction(action_id);
-            if(ret>0){
-                ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
-                if(ret>0){
-                    return 1;
-                }else{
-                    return 0;
+                ret = resultDataACDao.checkVoteGiveUpForAction(action_id);
+                if (ret > 0) {
+                    ret = resultDataACDao.closeVoteAction(action_id, ACConstants.STATUS_FINISH_FAIL);
                 }
             }
-            //如果不是全部弃权,但是当前弃权操作成功完成,返回1
-            return 1;
         }
-        return 0;
+
+        if (ret > 0) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
+
+//    @Transactional
+//    public int decisionDenyForApply(long voter_id,long action_id){
+//        long ret=resultDataACDao.decisionForApply(voter_id,action_id,ACConstants.DECISION_DENY);
+//        if(ret>0){
+//            /* 有一个所有者投了否决票,投票失败;
+//             * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
+//             * 2)删除所有投票状态
+//             */
+//            ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
+//            if(ret>0){
+//                return 1;
+//            }
+//        }
+//        return 0;
+//    }
+//
+//    @Transactional
+//    public int decisionPermitForApply(long voter_id, long action_id) {
+//        long ret = resultDataACDao.decisionForApply(voter_id, action_id, ACConstants.DECISION_PERMIT);
+//        if (ret > 0) {
+//            /* 1)检查投票活动的所有表决是不是只有"弃权"和"同意申请"两种状态;
+//             * 2)是,删除所有表决状态,关闭投票活动,改为成功;
+//             * 3)执行申请业务;
+//             */
+//            ret = resultDataACDao.checkVoteSuccessForAction(action_id);
+//
+//            if (ret > 0) {
+//                VoteActionPO voteActionPO = resultDataACDao.getVoteActionPOById(action_id);
+//                if (voteActionPO != null) {
+//                    //将long变量转为长度为1的Long[],为了代码重用.
+//                    Long[] tableIds = new Long[1];
+//                    tableIds[0] = voteActionPO.getTable_id();
+//
+//                    switch (voteActionPO.getType()) {
+//                        case ACConstants.TYPE_DELETEBLACK:
+//                            //删除黑名单
+//                            ret = userDao.deleteRule(tableIds, voteActionPO.getUser_id(), ACConstants.BLACK);
+//                            break;
+//                        case ACConstants.TYPE_ADDWHITE:
+//                            //增加白名单
+//                            ret = userDao.addRule(tableIds, voteActionPO.getUser_id(), ACConstants.WHITE, ACConstants.NON_EXPORTABLE);
+//                            break;
+//                        case ACConstants.TYPE_VISIT:
+//                            //hive层授予数据的权限
+//                            //TODO
+//                            break;
+//                        default:
+//                            break;
+//                    }
+//                    if (ret > 0) {
+//                        ret = resultDataACDao.closeVoteAction(action_id, ACConstants.STATUS_FINISH_SUCCESS);
+//                        if (ret > 0) {
+//                            return 1;
+//                        } else {
+//                            return 0;
+//                        }
+//                    }
+//                }
+//            }
+//
+//            //如果不是全部同意,但是当前同意操作成功完成,返回1
+//            return 1;
+//        }
+//        return 0;
+//    }
+//
+//    @Transactional
+//    public int decisionGiveUpForApply(long voter_id,long action_id){
+//        long ret=resultDataACDao.decisionForApply(voter_id,action_id, ACConstants.DECISION_GIVEUP);
+//        if(ret>0){
+//            /* 当全部所有者投了弃权票,投票失败;
+//             * 1)删除所有表决状态;关闭投票活动,投票活动结果改为失败;
+//             * 2)删除所有投票状态
+//             */
+//            ret=resultDataACDao.checkVoteGiveUpForAction(action_id);
+//            if(ret>0){
+//                ret=resultDataACDao.closeVoteAction(action_id,ACConstants.STATUS_FINISH_FAIL);
+//                if(ret>0){
+//                    return 1;
+//                }else{
+//                    return 0;
+//                }
+//            }
+//            //如果不是全部弃权,但是当前弃权操作成功完成,返回1
+//            return 1;
+//        }
+//        return 0;
+//    }
 
     @Transactional
     public List<VoteStatusPO> getApplyList(long voter_id){
