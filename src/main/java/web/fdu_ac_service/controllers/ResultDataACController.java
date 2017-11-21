@@ -108,7 +108,7 @@ public class ResultDataACController {
             List<Long> resultTableUserIdList = resultDataACService.getResultTableOwnerIdList(resultTableId);
             int size = resultTableUserIdList.size();
 
-            int ret = 0;
+            int ret = 0;//service层返回值
             if (size > 1) {
                 //所有者中排除发起人,其余为表决人
                 Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -160,7 +160,7 @@ public class ResultDataACController {
             List<Long> resultTableUserIdList = resultDataACService.getResultTableOwnerIdList(resultTableId);
             int size = resultTableUserIdList.size();
 
-            int ret;
+            int ret;//service层返回值
             if (size > 1) {
                 //所有者中排除发起人,其余为表决人
                 Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -211,7 +211,7 @@ public class ResultDataACController {
         try {
             List<Long> resultTableUserIdList = resultDataACService.getResultTableOwnerIdList(resultTableId);
             int size = resultTableUserIdList.size();
-            int ret = 0;
+            int ret=0;//service层返回值
             if (size > 1) {
                 //所有者中排除发起人,其余为表决人
                 Iterator<Long> sListIterator = resultTableUserIdList.iterator();
@@ -261,7 +261,7 @@ public class ResultDataACController {
         long actionId = Long.parseLong(request.getParameter("actionId"));
         int decision = Integer.parseInt(request.getParameter("decision"));
 
-        int ret;//service层返回值
+        int ret=0;//service层返回值
 
         try {
             if (decision == ACConstants.DECISION_DENY) {
